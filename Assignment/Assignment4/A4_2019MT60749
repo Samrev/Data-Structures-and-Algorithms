@@ -1,0 +1,226 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Vector;
+import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.util.Iterator;
+import java.util.Map;
+
+public class A4_2019MT60749 {
+    public static void main(String[] args) throws FileNotFoundException {
+        Scanner scan = new Scanner(new File(args[0]));
+        Scanner scan1 = new Scanner(new File(args[1]));
+        Scanner scan2 = new Scanner(args[2]);
+        Vector<String> v =new Vector();
+	String[] s;
+        boolean isheader = true;
+        while(scan.hasNext())
+        {
+            s = scan.nextLine().split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+	    if(isheader)
+            {
+                isheader = false;
+                continue;
+            }
+	    v.add(s[1]);
+        }
+        scan.close();
+        isheader = true;
+        Vector<String[]> Edges = new Vector<String[]>();
+        HashMap<String,Integer> IsPresent = new HashMap<String,Integer>();
+        while(scan1.hasNext())
+        {
+            s = scan1.nextLine().split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+	    if(isheader)
+            {
+                isheader = false;
+                continue;
+            }
+            if(IsPresent.containsKey(s[0]+s[1]))
+                continue;
+	    else
+            {
+                Edges.add(s);
+                IsPresent.put(s[0]+s[1],1);
+            }
+        }
+        Graph G = new Graph(v,Edges);
+        String function = scan2.next();
+        if(function.equals("average"))
+            System.out.println(Average(G));
+        if(function.equals("rank"))
+            Rank(G);
+    }
+    
+    public static String Average(Graph G)
+    {
+        if(G.getOrder()!=0)
+        {
+            float avg=((float)2*G.getSize()/(float)G.getOrder());
+            float roundoff = (float)((float)Math.round(avg*100.0)/100.0);
+            return String.format("%.2f",roundoff);
+        }
+        else
+            return "0.00";
+    }
+    public static void Rank(Graph G)
+    {
+        Vector<String[]> Nodes = new Vector<String[]>();
+        String[] e = new String[2];
+        for(String name: G.getNodes())
+        {
+            e[0]=name;
+            double sum =0;
+            for(Edge i:G.adjacent.get(name))
+            {
+                sum= sum+i.getWeight();
+            }
+            e[1]=Double.toString(sum);
+            Nodes.add(e);
+        }
+        Nodes =sort(Nodes);
+        String[] temp;
+        for(int i=0;i<G.getOrder()-1;i++)
+        {
+            temp = Nodes.get(i);
+            System.out.print(temp[0]+",");
+        }
+        temp = Nodes.get(G.getOrder()-1);
+        System.out.print(temp[0]);
+    }
+    public static Vector<String[]> sort(Vector<String[]> V)
+    {
+        int L = V.size();
+        if(L<=1)
+            return V;
+        Vector<String[]> V1 = new Vector<String[]>();
+        Vector<String[]> V2 = new Vector<String[]>();
+        for(int i =0;i<L/2;i++)
+        {
+            V1.add(V.get(i));
+        }
+        for(int i = L/2;i<L;i++)
+        {
+            V2.add(V.get(i));
+        }
+        V1 = sort(V1);
+        V2 = sort(V2);
+        return mergeSort(V1,V2);
+    }
+    public static Vector<String[]> mergeSort(Vector<String[]> V1,Vector<String[]>V2)
+    {
+        int i= 0,j=0;
+        Vector<String[]> S = new Vector<String[]>();
+        while(i<V1.size()&&j<V2.size())
+        {
+            String[] s1 = V1.get(i);
+            String[] s2 = V2.get(j);
+            if(Integer.parseInt(s1[1])>Integer.parseInt(s2[1]))
+            {
+                S.add(V1.get(i));
+                i++;
+            }
+            else if(Integer.parseInt(s1[1])==Integer.parseInt(s2[1]))
+            {
+                if(s1[0].compareTo(s2[0])>0)
+                {
+                    S.add(V1.get(i));
+                    i++;
+                }
+                else
+                {
+                    S.add(V2.get(j));
+                    j++;
+                }
+            }
+            else
+            {
+                S.add(V2.get(j));
+                j++;
+            }
+        }
+        while(i<V1.size())
+        {
+            S.add(V1.get(i));
+            i++;
+        }
+        while(j<V2.size())
+        {
+            S.add(V2.get(j));
+            j++;
+        }
+        return S;
+    }
+    
+        
+    
+}
+class Graph{
+    private int Order=0; // number of vertices
+    private int Size=0;
+    private Vector<String> Nodes;
+    private Vector<String[]> Edges;
+    public static HashMap<String,LinkedList<Edge>> adjacent; //vertices
+    public Graph(Vector<String> V,Vector<String[]> E)
+    {
+        this.Order = V.size();
+        this.Nodes = V;
+        this.Edges = E;
+        this.Size = E.size();
+        this.adjacent = new HashMap<String,LinkedList<Edge>>();
+        for(String v:V)
+        {
+            this.adjacent.put(v, new LinkedList<Edge>());
+        }
+        for(String[] e:E)
+        {
+            adjacent.get(e[0]).add(new Edge(new Node(e[1]),Double.parseDouble(e[2])));	
+        }
+    }
+    public int getOrder()
+    {
+        return Order;
+    }
+    public Vector<String> getNodes()
+    {
+        return Nodes;
+    }
+    public Vector<String[]> getEdges()
+    {
+        return Edges;
+    }
+    public int getSize()
+    {
+        return Size;
+    }
+}
+class Node{
+    private String name;
+    public Node(String name)
+    {
+        this.name =name;
+    }
+    public String getName()
+    {
+        return name;
+    }
+}
+class Edge
+{
+    private String Neighbour;
+    private double  weight;
+    public Edge(Node n,double weight)
+    {
+        this.weight = weight;
+        this.Neighbour = n.getName();
+    }
+    public String getNeighbour()
+    {
+        return Neighbour;
+    }
+    public double getWeight()
+    {
+        return weight;
+    }
+}

@@ -1,0 +1,2 @@
+ramesh,2,300
+kamlesh,3,400
